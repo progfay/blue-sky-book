@@ -1,4 +1,7 @@
 main
+aozorabunko_text
+texts
+.vscode
 
 ### https://raw.github.com/github/gitignore/4a8e0a151becd5ccbb83e4aca6e6c195f3d506fd/Go.gitignore
 
@@ -14,5 +17,4 @@ main
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
 
