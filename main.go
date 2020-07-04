@@ -99,19 +99,17 @@ func parseLine(line string) []string {
 				chars = make([]rune, 0)
 			}
 
-		case '（':
+		case '(', '（':
 			inRoundedBracket = true
 
-		case '）':
+		case ')', '）':
 			inRoundedBracket = false
 			if !inSentence {
 				lines = append(lines, strings.TrimSpace(string(chars)))
 				chars = make([]rune, 0)
 			}
 
-		case '！': fallthrough
-		case '？': fallthrough
-		case '。':
+		case '!', '！', '?', '？', '。':
 			if inSentence && !inAngledBracket && !inRoundedBracket {
 				lines = append(lines, strings.TrimSpace(string(chars)))
 				chars = make([]rune, 0)
