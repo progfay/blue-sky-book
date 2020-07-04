@@ -3,19 +3,20 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"strings"
 	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 var (
 	DeliminatorRegexp = regexp.MustCompile(`^-+$`)
 	AnnotationRegexp  = regexp.MustCompile(`［＃[^］]+］`)
-	FuriganaRegexp        = regexp.MustCompile(`《[^》]+》`)
+	FuriganaRegexp    = regexp.MustCompile(`《[^》]+》`)
 )
 
 func init() {
@@ -144,6 +145,16 @@ func main() {
 
 	for _, line := range lines {
 		for _, sentence := range parseLine(line) {
+			if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
+				continue
+			}
+			if !strings.HasSuffix(sentence, "。") {
+				continue
+			}
+			length := utf8.RuneCountInString(sentence)
+			if length < 50 || 80 < length {
+				continue
+			}
 			fmt.Println(sentence)
 		}
 	}
