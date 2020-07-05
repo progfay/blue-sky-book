@@ -136,26 +136,30 @@ func main() {
 		log.Fatal(err)
 	}
 
-	path := matches[rand.Intn(len(matches))]
+	for _, path := range matches {
 
-	lines, err := GetLinesFromBook(path)
-	if err != nil {
-		log.Fatal(err)
-	}
+		lines, err := GetLinesFromBook(path)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	for _, line := range lines {
-		for _, sentence := range parseLine(line) {
-			if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
-				continue
+		for _, line := range lines {
+			for _, sentence := range parseLine(line) {
+				if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
+					continue
+				}
+				if !strings.HasSuffix(sentence, "。") {
+					continue
+				}
+				if strings.Contains(sentence, "※") {
+					continue
+				}
+				length := utf8.RuneCountInString(sentence)
+				if length < 50 || 80 < length {
+					continue
+				}
+				fmt.Println(sentence)
 			}
-			if !strings.HasSuffix(sentence, "。") {
-				continue
-			}
-			length := utf8.RuneCountInString(sentence)
-			if length < 50 || 80 < length {
-				continue
-			}
-			fmt.Println(sentence)
 		}
 	}
 }
