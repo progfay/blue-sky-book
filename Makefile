@@ -3,8 +3,8 @@ all: build generate
 setup: setup.sh
 	./setup.sh
 
-build: src/main.go
-	go build -o bsb ./src/main.go
+build: src
+	cd src && go build -o ../bsb
 
 generate:
 	./bsb > output.txt
