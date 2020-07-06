@@ -16,7 +16,7 @@ import (
 var (
 	DeliminatorRegexp = regexp.MustCompile(`^-+$`)
 	AnnotationRegexp  = regexp.MustCompile(`［.+?］`)
-	FuriganaRegexp    = regexp.MustCompile(`《[^》]+》`)
+	FuriganaRegexp    = regexp.MustCompile(`《.+?》`)
 )
 
 func init() {
