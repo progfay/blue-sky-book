@@ -7,4 +7,4 @@ build: src
 	cd src && go build -o ../bsb
 
 generate:
-	./bsb > output.txt
+	./bsb -target-dir texts -min 50 -max 80 > output.txt

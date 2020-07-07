@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"flag"
 	"math/rand"
 	"path/filepath"
 	"strings"
@@ -18,7 +19,12 @@ func init() {
 }
 
 func main() {
-	matches, err := filepath.Glob("texts/*.txt")
+	targetDir := flag.String("target-dir", "texts", "directory contains aozora book data files")
+	min := flag.Int("min", 50, "minimum length of sentence to extract")
+	max := flag.Int("max", 80, "maximum length of sentence to extract")
+	flag.Parse()
+
+	matches, err := filepath.Glob(filepath.Join(*targetDir, "*.txt"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,7 +48,7 @@ func main() {
 					continue
 				}
 				length := utf8.RuneCountInString(sentence)
-				if length < 50 || 80 < length {
+				if length < *min || *max < length {
 					continue
 				}
 				fmt.Println(sentence)
