@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-	"flag"
 	"math/rand"
 	"path/filepath"
 	"strings"
@@ -12,6 +12,7 @@ import (
 
 	b "github.com/progfay/blue-sky-book/book"
 	l "github.com/progfay/blue-sky-book/line"
+	q "github.com/progfay/blue-sky-book/queue"
 )
 
 func init() {
@@ -29,30 +30,38 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, path := range matches {
-		book := b.NewBook(path)
-		lines, err := book.GetLinesFromBook()
-		if err != nil {
-			log.Fatal(err)
-		}
+	queue := q.NewQueue(10)
 
-		for _, line := range lines {
-			for _, sentence := range l.ParseLine(line) {
-				if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
-					continue
-				}
-				if !strings.HasSuffix(sentence, "。") {
-					continue
-				}
-				if strings.Contains(sentence, "※") {
-					continue
-				}
-				length := utf8.RuneCountInString(sentence)
-				if length < *min || *max < length {
-					continue
-				}
-				fmt.Println(sentence)
+	log.Println(queue)
+
+	for _, path := range matches {
+		queue.Add(func() {
+			book := b.NewBook(path)
+			lines, err := book.GetLinesFromBook()
+			if err != nil {
+				log.Fatal(err)
 			}
-		}
+
+			for _, line := range lines {
+				for _, sentence := range l.ParseLine(line) {
+					if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
+						continue
+					}
+					if !strings.HasSuffix(sentence, "。") {
+						continue
+					}
+					if strings.Contains(sentence, "※") {
+						continue
+					}
+					length := utf8.RuneCountInString(sentence)
+					if length < *min || *max < length {
+						continue
+					}
+					fmt.Println(sentence)
+				}
+			}
+		})
 	}
+
+	queue.Start()
 }
