@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -30,37 +31,37 @@ func main() {
 		log.Fatal(err)
 	}
 
-	queue := q.NewQueue(10)
+	handler := func(path string) {
+		book := b.NewBook(path)
+		lines, err := book.GetLinesFromBook()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	log.Println(queue)
+		for _, line := range lines {
+			for _, sentence := range l.ParseLine(line) {
+				if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
+					continue
+				}
+				if !strings.HasSuffix(sentence, "。") {
+					continue
+				}
+				if strings.Contains(sentence, "※") {
+					continue
+				}
+				length := utf8.RuneCountInString(sentence)
+				if length < *min || *max < length {
+					continue
+				}
+				fmt.Println(sentence)
+			}
+		}
+	}
+
+	queue := q.NewQueue(context.Background(), 100, handler)
 
 	for _, path := range matches {
-		queue.Add(func() {
-			book := b.NewBook(path)
-			lines, err := book.GetLinesFromBook()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for _, line := range lines {
-				for _, sentence := range l.ParseLine(line) {
-					if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
-						continue
-					}
-					if !strings.HasSuffix(sentence, "。") {
-						continue
-					}
-					if strings.Contains(sentence, "※") {
-						continue
-					}
-					length := utf8.RuneCountInString(sentence)
-					if length < *min || *max < length {
-						continue
-					}
-					fmt.Println(sentence)
-				}
-			}
-		})
+		queue.Add(path)
 	}
 
 	queue.Start()
