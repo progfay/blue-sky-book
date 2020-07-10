@@ -2,7 +2,14 @@ package queue
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
 	"sync"
+	"sync/atomic"
+	"syscall"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type Queue struct {
@@ -13,6 +20,8 @@ type Queue struct {
 	wg            sync.WaitGroup
 	ctx           context.Context
 	cancel        func()
+	doneJobCount  int64
+	allJobCount   int64
 }
 
 type worker struct {
@@ -43,6 +52,8 @@ func NewQueue(ctx context.Context, maxJobCount int, handler func(string)) Queue 
 		wg:            sync.WaitGroup{},
 		ctx:           childCtx,
 		cancel:        cancel,
+		doneJobCount:  0,
+		allJobCount:   0,
 	}
 }
 
@@ -78,8 +89,17 @@ func (q *Queue) Start() {
 				q.wg.Add(1)
 				go func(job string) {
 					w.Run(job)
-					q.wg.Done()
+					atomic.AddInt64(&q.doneJobCount, 1)
 					q.idlingWorkers <- w
+					width, _, _ := terminal.GetSize(syscall.Stdin)
+					doneJobCount := int(atomic.LoadInt64(&q.doneJobCount))
+					allJobCount := int(atomic.LoadInt64(&q.allJobCount))
+					done := 0
+					if allJobCount > 0 {
+						done = (width - 16) * doneJobCount / allJobCount
+					}
+					fmt.Fprintf(os.Stderr, "\r[\x1b[7m%s\x1b[0m%s] %5d / %5d", strings.Repeat(" ", done), strings.Repeat(" ", width-done-16), doneJobCount, allJobCount)
+					q.wg.Done()
 				}(job)
 			}()
 		}
@@ -90,4 +110,5 @@ func (q *Queue) Add(job string) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.queue = append(q.queue, job)
+	atomic.AddInt64(&q.allJobCount, 1)
 }
