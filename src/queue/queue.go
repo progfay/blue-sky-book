@@ -68,23 +68,20 @@ func (q *Queue) Start() {
 		select {
 		case <-q.ctx.Done():
 			q.wg.Wait()
+			q.isRunning = false
 			return
 		case w := <-q.idlingWorkers:
-			if len(q.queue) == 0 {
-				continue
-			}
 			func() {
 				q.mu.Lock()
 				defer q.mu.Unlock()
 
+				if len(q.queue) == 0 {
+					q.cancel()
+					return
+				}
+
 				job := q.queue[0]
 				q.queue = q.queue[1:]
-
-				if len(q.queue) == 0 {
-					q.wg.Wait()
-					q.isRunning = false
-					q.cancel()
-				}
 
 				q.wg.Add(1)
 				go func(job string) {
