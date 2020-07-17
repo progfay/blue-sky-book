@@ -22,8 +22,7 @@ func init() {
 
 func main() {
 	targetDir := flag.String("target-dir", "texts", "directory contains aozora book data files")
-	min := flag.Int("min", 50, "minimum length of sentence to extract")
-	max := flag.Int("max", 80, "maximum length of sentence to extract")
+	min := flag.Int("min", 1000, "minimum length of printing sentences")
 	flag.Parse()
 
 	matches, err := filepath.Glob(filepath.Join(*targetDir, "*.txt"))
@@ -38,22 +37,25 @@ func main() {
 			log.Fatal(err)
 		}
 
+		sentences := ""
 		for _, line := range lines {
 			for _, sentence := range l.ParseLine(line) {
 				if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
+					sentences = ""
 					continue
 				}
 				if !strings.HasSuffix(sentence, "。") {
+					sentences = ""
 					continue
 				}
 				if strings.Contains(sentence, "※") {
 					continue
 				}
-				length := utf8.RuneCountInString(sentence)
-				if length < *min || *max < length {
-					continue
+				sentences += sentence
+				if utf8.RuneCountInString(sentences) >= *min {
+					fmt.Println(sentences)
+					sentences = ""
 				}
-				fmt.Println(sentence)
 			}
 		}
 	}
