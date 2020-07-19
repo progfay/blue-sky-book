@@ -1,19 +1,14 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
 	"log"
 	"math/rand"
 	"path/filepath"
-	"strings"
 	"time"
-	"unicode/utf8"
 
-	b "github.com/progfay/blue-sky-book/book"
-	l "github.com/progfay/blue-sky-book/line"
-	q "github.com/progfay/blue-sky-book/queue"
+	j "github.com/progfay/blue-sky-book/job"
+	"github.com/progfay/jobqueue"
 )
 
 func init() {
@@ -31,38 +26,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	handler := func(path string) {
-		book := b.NewBook(path)
-		lines, err := book.GetLinesFromBook()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, line := range lines {
-			for _, sentence := range l.ParseLine(line) {
-				if strings.HasPrefix(sentence, "「") || strings.HasPrefix(sentence, "（") {
-					continue
-				}
-				if !strings.HasSuffix(sentence, "。") {
-					continue
-				}
-				if strings.Contains(sentence, "※") {
-					continue
-				}
-				length := utf8.RuneCountInString(sentence)
-				if length < *min || *max < length {
-					continue
-				}
-				fmt.Println(sentence)
-			}
-		}
-	}
-
-	queue := q.NewQueue(context.Background(), 100, handler)
+	queue := jobqueue.NewQueue(100)
+	defer queue.Stop()
 
 	for _, path := range matches {
-		queue.Add(path)
+		queue.Enqueue(&j.Job{
+			Min:  *min,
+			Max:  *max,
+			Path: path,
+		})
 	}
 
-	queue.Start()
+	queue.Wait()
 }
